@@ -16,6 +16,7 @@ io.on("connection", (socket) => {
     msg: `Say HI to ${socket.id}!`,
     msgId: nanoid(),
     senderId: "server",
+    senderName: "server",
   });
 
   socket.on("hello", (args: any[], callback) => {
@@ -25,8 +26,13 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("clientMsg", (msg) => {
-    io.emit("message", { msg, msgId: nanoid(), senderId: socket.id });
+  socket.on("clientMsg", ({ msg, senderName, senderId }) => {
+    io.emit("message", {
+      msg,
+      msgId: nanoid(32),
+      senderId,
+      senderName,
+    });
     console.log(`$${socket.id}: ${msg}`);
   });
 
@@ -37,6 +43,7 @@ io.on("connection", (socket) => {
       msg: `Bye-bye ${socket.id}.`,
       msgId: nanoid(),
       senderId: "server",
+      senderName: "server",
     });
   });
 });
