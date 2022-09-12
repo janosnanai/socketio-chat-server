@@ -6,8 +6,12 @@ export function addUser(id: string, name: string) {
   return newUser;
 }
 
-export function getUser(id: string) {
+export function getOneUser(id: string) {
   return users.find((user) => user.id === id);
+}
+
+export function getAllUsers() {
+  return users;
 }
 
 export function removeUser(id: string) {
@@ -30,7 +34,7 @@ export function getUsersTyping() {
 }
 
 export function setUserTyping(id: string, status: boolean) {
-  const user = getUser(id);
+  const user = getOneUser(id);
   if (!user) return;
   user.typing = status;
 }

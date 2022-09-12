@@ -5,10 +5,11 @@ import { Server } from "socket.io";
 import {
   addUser,
   removeUser,
+  getAllUsers,
   getUsersTyping,
   setUserTyping,
 } from "./lib/users";
-import { formatMessage } from "./lib/messages";
+import { formatChatMessage } from "./lib/messages";
 import { EventTypes, MessageTypes } from "./lib/constants";
 
 const app = express();
@@ -22,24 +23,25 @@ io.on(EventTypes.CONNECT, (socket) => {
     const newUser = addUser(socket.id, msg.name);
     socket.emit(
       EventTypes.SERVER_MESSAGE,
-      formatMessage({
+      formatChatMessage({
         content: `Welcome ${newUser.name}!`,
         type: MessageTypes.SERVER,
       })
     );
     socket.broadcast.emit(
       EventTypes.SERVER_MESSAGE,
-      formatMessage({
+      formatChatMessage({
         content: `${newUser.name} joined!`,
         type: MessageTypes.SERVER,
       })
     );
+    io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
   });
 
   socket.on(EventTypes.CREATE_MESSAGE, ({ content, author }: ClientMsg) => {
     io.emit(
       EventTypes.CLIENT_MESSAGE,
-      formatMessage({
+      formatChatMessage({
         content,
         type: MessageTypes.CLIENT,
         author,
@@ -59,11 +61,12 @@ io.on(EventTypes.CONNECT, (socket) => {
     socket.broadcast.emit(EventTypes.TYPING, { isTyping: getUsersTyping() });
     io.emit(
       EventTypes.SERVER_MESSAGE,
-      formatMessage({
+      formatChatMessage({
         content: `${removedUser.name} left...`,
         type: MessageTypes.SERVER,
       })
     );
+    io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
   });
 });
 

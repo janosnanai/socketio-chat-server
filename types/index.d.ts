@@ -21,6 +21,9 @@ type ServerMsg = {
 type TypingMsg = {
   isTyping: boolean;
 };
+type SyncUsersMsg = {
+  users: User[];
+};
 
 type User = {
   id: string;
