@@ -1,5 +1,8 @@
 type NewUserMsg = {
-  name: string;
+  username: string;
+};
+type JoinRoomMsg = {
+  roomId: string;
 };
 type CreateMsg = {
   content: string;
@@ -24,9 +27,17 @@ type TypingMsg = {
 type SyncUsersMsg = {
   users: User[];
 };
+type SyncRoomsMsg = {
+  rooms: Room[];
+};
 
 type User = {
   id: string;
-  name: string;
+  username: string;
   typing: boolean;
+  roomId?: string | null;
+};
+type Room = {
+  id: string;
+  name: string;
 };
