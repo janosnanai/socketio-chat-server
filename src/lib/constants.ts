@@ -17,7 +17,6 @@ export enum MessageTypes {
   CLIENT,
 }
 
-
 // for simplicity index 0 will be default
 export const CHAT_ROOMS = [
   { id: "1", name: "Chill Zone" },
