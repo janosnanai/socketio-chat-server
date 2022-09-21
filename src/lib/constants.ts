@@ -16,11 +16,3 @@ export enum MessageTypes {
   SERVER,
   CLIENT,
 }
-
-// for simplicity index 0 will be default
-export const CHAT_ROOMS = [
-  { id: "1", name: "Chill Zone" },
-  { id: "2", name: "Rick & Morty Fans" },
-  { id: "3", name: "Apex Legends LFG" },
-  { id: "4", name: "FFD Printing QA" },
-];

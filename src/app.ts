@@ -3,7 +3,10 @@ import type { Socket } from "socket.io";
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import cors from "cors";
 
+import HttpError from "./lib/http-error";
+import { addRoomChatMessage, getRoomChat } from "./lib/chats";
 import {
   addUser,
   removeUser,
@@ -12,7 +15,7 @@ import {
   setUserTyping,
   getUser,
 } from "./lib/users";
-import { getAllRooms, getRoom } from "./lib/rooms";
+import { getRoom, getRoomList } from "./lib/rooms";
 import { formatChatMessage } from "./lib/messages";
 import { EventTypes, MessageTypes } from "./lib/constants";
 
@@ -22,13 +25,25 @@ const io = new Server(httpServer, {
   cors: { origin: "*" },
 });
 
+app.use(cors());
+
+// GET route for room-chat
+app.get("/room-chats/:room_id", (req, res, next) => {
+  const chat = getRoomChat(req.params.room_id);
+  if (!chat) {
+    const error = new HttpError("Cannot find chat-room.", 404);
+    return next(error);
+  }
+  res.status(200).json(chat);
+});
+
 io.on(EventTypes.CONNECT, (socket: Socket) => {
   // new user event
   socket.on(EventTypes.NEW_USER, (msg: NewUserMsg, callback: Function) => {
-    const newUser = addUser(socket.id, msg.username);
+    addUser(socket.id, msg.username);
     io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
     // send available rooms in ack
-    callback({ rooms: getAllRooms() });
+    callback({ rooms: getRoomList() });
   });
 
   // user join room event
@@ -59,13 +74,12 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
       socket.broadcast.to(currentRoom.id).emit(EventTypes.TYPING, {
         isTyping: getUsersTypingByRoom(currentRoom.id),
       });
-      io.to(currentRoom.id).emit(
-        EventTypes.SERVER_MESSAGE,
-        formatChatMessage({
-          content: `${user.username} left the room.`,
-          type: MessageTypes.SERVER,
-        })
-      );
+      const message = formatChatMessage({
+        content: `${user.username} left the room.`,
+        type: MessageTypes.SERVER,
+      });
+      io.to(currentRoom.id).emit(EventTypes.SERVER_MESSAGE, message);
+      addRoomChatMessage(user.roomId, message as ServerMsg);
     }
   );
 
@@ -81,13 +95,12 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
     socket.broadcast.to(currentRoom.id).emit(EventTypes.TYPING, {
       isTyping: getUsersTypingByRoom(currentRoom.id),
     });
-    io.to(currentRoom.id).emit(
-      EventTypes.SERVER_MESSAGE,
-      formatChatMessage({
-        content: `${user.username} left the room.`,
-        type: MessageTypes.SERVER,
-      })
-    );
+    const message = formatChatMessage({
+      content: `${user.username} left the room.`,
+      type: MessageTypes.SERVER,
+    });
+    io.to(currentRoom.id).emit(EventTypes.SERVER_MESSAGE, message);
+    addRoomChatMessage(currentRoom.id, message as ServerMsg);
     // ack client room leave
     callback();
   });
@@ -98,14 +111,13 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
     if (!user) return;
     const room = getRoom(user.roomId);
     if (!room) return;
-    io.to(room.id).emit(
-      EventTypes.CLIENT_MESSAGE,
-      formatChatMessage({
-        content,
-        type: MessageTypes.CLIENT,
-        author,
-      })
-    );
+    const message = formatChatMessage({
+      content,
+      type: MessageTypes.CLIENT,
+      author,
+    });
+    io.to(room.id).emit(EventTypes.CLIENT_MESSAGE, message);
+    addRoomChatMessage(room.id, message as ClientMsg);
   });
 
   // user is typing event
@@ -132,13 +144,12 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
       isTyping: getUsersTypingByRoom(currentRoom.id),
     });
     socket.leave(currentRoom.id);
-    io.to(currentRoom.id).emit(
-      EventTypes.SERVER_MESSAGE,
-      formatChatMessage({
-        content: `${user.username} left the room.`,
-        type: MessageTypes.SERVER,
-      })
-    );
+    const message = formatChatMessage({
+      content: `${user.username} left the room.`,
+      type: MessageTypes.SERVER,
+    });
+    io.to(currentRoom.id).emit(EventTypes.SERVER_MESSAGE, message);
+    addRoomChatMessage(currentRoom.id, message as ServerMsg);
   });
 });
 

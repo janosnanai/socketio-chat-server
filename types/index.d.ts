@@ -45,3 +45,8 @@ type Room = {
   id: string;
   name: string;
 };
+type RoomChat = {
+  id?: string;
+  roomId: string;
+  messages: (ClientMsg | ServerMsg)[];
+};
