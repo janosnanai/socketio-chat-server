@@ -58,13 +58,12 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
       socket.join(nextRoom.id);
       user.roomId = nextRoom.id;
       io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
-      socket.broadcast.to(user.roomId).emit(
-        EventTypes.SERVER_MESSAGE,
-        formatChatMessage({
-          content: `${user.username} joined the room.`,
-          type: MessageTypes.SERVER,
-        })
-      );
+      let message = formatChatMessage({
+        content: `${user.username} joined the room.`,
+        type: MessageTypes.SERVER,
+      });
+      socket.broadcast.to(user.roomId).emit(EventTypes.SERVER_MESSAGE, message);
+      addRoomChatMessage(user.roomId, message as ServerMsg);
       io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
       // ack client room change
       callback();
@@ -74,12 +73,12 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
       socket.broadcast.to(currentRoom.id).emit(EventTypes.TYPING, {
         isTyping: getUsersTypingByRoom(currentRoom.id),
       });
-      const message = formatChatMessage({
+      message = formatChatMessage({
         content: `${user.username} left the room.`,
         type: MessageTypes.SERVER,
       });
       io.to(currentRoom.id).emit(EventTypes.SERVER_MESSAGE, message);
-      addRoomChatMessage(user.roomId, message as ServerMsg);
+      addRoomChatMessage(currentRoom.id, message as ServerMsg);
     }
   );
 
