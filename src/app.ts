@@ -38,9 +38,11 @@ app.get("/room-chats/:room_id", (req, res, next) => {
 });
 
 io.on(EventTypes.CONNECT, (socket: Socket) => {
+  let thisUserId: string;
   // new user event
   socket.on(EventTypes.NEW_USER, (msg: NewUserMsg, callback: Function) => {
-    addUser(socket.id, msg.username);
+    thisUserId = msg.id;
+    addUser(msg.id, msg.username);
     io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
     // send available rooms in ack
     callback({ rooms: getRoomList() });
@@ -50,7 +52,7 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
   socket.on(
     EventTypes.JOIN_ROOM,
     ({ roomId }: JoinRoomMsg, callback: Function) => {
-      const user = getUser(socket.id);
+      const user = getUser(thisUserId);
       if (!user) return;
       const currentRoom = getRoom(user.roomId);
       const nextRoom = getRoom(roomId);
@@ -84,7 +86,7 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
 
   // user leave room event
   socket.on(EventTypes.LEAVE_ROOM, (callback: Function) => {
-    const user = getUser(socket.id);
+    const user = getUser(thisUserId);
     if (!user) return;
     const currentRoom = getRoom(user.roomId);
     if (!currentRoom) return;
@@ -106,7 +108,7 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
 
   // chatmessage event
   socket.on(EventTypes.CREATE_MESSAGE, ({ content, author }: ClientMsg) => {
-    const user = getUser(socket.id);
+    const user = getUser(thisUserId);
     if (!user) return;
     const room = getRoom(user.roomId);
     if (!room) return;
@@ -121,11 +123,11 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
 
   // user is typing event
   socket.on(EventTypes.TYPING, ({ isTyping }: TypingMsg) => {
-    const user = getUser(socket.id);
+    const user = getUser(thisUserId);
     if (!user) return;
     const room = getRoom(user.roomId);
     if (!room) return;
-    setUserTyping(socket.id, isTyping);
+    setUserTyping(thisUserId, isTyping);
     socket.broadcast
       .to(room.id)
       .emit(EventTypes.TYPING, { isTyping: getUsersTypingByRoom(room.id) });
@@ -133,12 +135,12 @@ io.on(EventTypes.CONNECT, (socket: Socket) => {
 
   // user disconnect event
   socket.on(EventTypes.DISCONNECT, () => {
-    const user = removeUser(socket.id);
+    const user = removeUser(thisUserId);
     if (!user) return;
     io.emit(EventTypes.SYNC_USERS, { users: getAllUsers() });
     const currentRoom = getRoom(user.roomId);
     if (!currentRoom) return;
-    setUserTyping(socket.id, false);
+    setUserTyping(thisUserId, false);
     socket.broadcast.to(currentRoom.id).emit(EventTypes.TYPING, {
       isTyping: getUsersTypingByRoom(currentRoom.id),
     });

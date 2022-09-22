@@ -1,4 +1,5 @@
 type NewUserMsg = {
+  id: string;
   username: string;
 };
 type JoinRoomMsg = {
