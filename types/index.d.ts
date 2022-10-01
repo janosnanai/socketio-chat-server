@@ -22,8 +22,12 @@ type ServerMsg = {
   id: string;
   time: string;
 };
-type TypingMsg = {
+type TypingRoomMsg = {
   isTyping: boolean;
+};
+type TypingPrivateMsg = {
+  isTyping: boolean;
+  targetUserId: string;
 };
 type SyncUsersMsg = {
   users: User[];
@@ -37,6 +41,7 @@ type User = {
   username: string;
   typing: boolean;
   roomId?: string | null;
+  socketId?: string | null;
 };
 type UserCore = {
   id: string;
@@ -49,5 +54,10 @@ type Room = {
 type RoomChat = {
   id?: string;
   roomId: string;
+  messages: (ClientMsg | ServerMsg)[];
+};
+type PrivateChat = {
+  id?: string;
+  userIds: [string, string];
   messages: (ClientMsg | ServerMsg)[];
 };

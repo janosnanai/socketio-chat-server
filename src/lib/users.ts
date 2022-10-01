@@ -8,6 +8,13 @@ export function addUser(id: string, username: string) {
   return newUser;
 }
 
+export function updateUserSocket(userId: string, socketId: string | null) {
+  const user = getUser(userId);
+  if (!user) return;
+  user.socketId = socketId;
+  return user;
+}
+
 export function userJoinRoom(userId: string, roomId: string) {
   const user = getUser(userId);
   const room = getRoom(roomId);
